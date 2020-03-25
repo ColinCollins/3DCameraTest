@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour
 {
 	private const float FALL_INIT_SPEED = 0.0000f;
 
-	public CharacterControllerTest characterCtrl;
+	public CharacterController characterCtrl;
 
 	[BoxGroup("Config"), Tooltip("Move Speed Step Per Sec")]
 	public float moveSpeedSp = 1f;
@@ -85,10 +85,46 @@ public class PlayerController : MonoBehaviour
 			inTheAir = true;
 		}
 
-		if ()
+		if (inTheAir) {
+			moveVec.y = verticalSpeed * deltaTime;
+		}
 
+		// move
+		var collitionFlags = characterCtrl.Move(moveVec);
+
+		// fater move
+		if (characterCtrl.isGrounded)
+		{
+			verticalSpeed = 0f;
+			inTheAir = false;
+		}
+		else if (collitionFlags == CollisionFlags.CollidedAbove)
+		{
+			verticalSpeed = FALL_INIT_SPEED;
+		}
+		else {
+			verticalSpeed += gravity * deltaTime;
+		}
 	}
 
+	private void tickYaw(float time, float deltaTime) {
+		var currentAngles = angles;
+		var currentYaw = currentAngles.y.uniformAngle360();
 
+		if ((rotate2Yaw - currentYaw).equalsZero()) return;
+
+		var deltaDegree = rotateDegreeSp * rotateSpeed * deltaTime;
+		currentAngles.y = Mathf.MoveTowardsAngle(currentYaw, rotate2Yaw, deltaDegree);
+		angles = currentAngles;
+	}
+
+	private void Update()
+	{
+		var time = Time.time;
+		var deltaTime = Time.deltaTime;
+		tickMove(time, deltaTime);
+
+		tickYaw(time, deltaTime);
+	}
 
 }
