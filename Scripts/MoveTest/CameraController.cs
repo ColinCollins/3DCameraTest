@@ -40,9 +40,13 @@ public class CameraController : MonoBehaviour
 	[BoxGroup("Collision"), Tooltip("预测时，yaw 的探测极限变化值")]
 	public float yawOffsetLimit = 90;
 	[BoxGroup("Collision"), Tooltip("预测时，yaw 的探测变化量")]
+
+
 	public float yawOffsetDelta = 1;
 	[BoxGroup("Collision"), Tooltip("预测时，pitch 的探测极限绝对值")]
 	public Vector2 pitchOffsetLimit = new Vector2(-10, 80);
+	[BoxGroup("Collision"), Tooltip("预测时，yaw 的探测变化量")]
+	public float pitchOffsetDelta = 1;
 	[BoxGroup("Collision"), Tooltip("预测时， viewport_z 的减量，适应相机位置 newarClipPlane 的差")]
 	public float viewport_z_decrease = 0.4f;
 	[BoxGroup("Collision"), Tooltip("预测时，角度变化量的参考倍率（乘法）")]
