@@ -38,7 +38,7 @@ public class CameraForPrediction
 		transform = camera.transform;
 	}
 
-	public void drawGizmos(CameraController config)
+	public void DrawGizmos(CameraController config)
 	{
 		Gizmos.color = Color.green;
 		Gizmos.DrawWireSphere(shouldPosition, config.collisionRadius);
@@ -59,21 +59,46 @@ public class CameraForPrediction
 		}
 	}
 
-	public void setJoystickDir(Vector2 dir) {
+	public void SetJoystickDir(Vector2 dir)
+	{
 		joystickDir = dir;
 	}
 
-	public void tick(CameraController config, float time, float deltaTime) {
+	public void Tick(CameraController config, float time, float deltaTime)
+	{
 		tickCamera(config, time, deltaTime);
 
 		var canSee = tickJoystick(config, time, deltaTime);
-		if (!canSee) {
+		if (!canSee)
+		{
 			tickSee(config, time, deltaTime);
 		}
 
 		tickFollow(config, time, deltaTime);
 	}
 
+	private void tickCamera(CameraController config, float time, float deltaTime)
+	{
+		camera.fieldOfView = config.camera.fieldOfView;
+		camera.nearClipPlane = config.camera.nearClipPlane;
+		camera.farClipPlane = config.camera.farClipPlane;
+		camera.aspect = config.camera.aspect;
+	}
 
+	private bool tickJoystick(CameraController config, float time, float deltaTime)
+	{
+		if (joystickDir.equalsZero()) return false;
+
+		var yawSignOffset = 0f;
+		var pitchSignOffset = 0f;
+		var targetAngles = angles;
+
+		if (config.joystickHighPass <= 90)
+		{
+			float joystickAngleVertial = Vector2.Angle(Vector2.up, joystickDir);
+
+		}
+
+	}
 
 }

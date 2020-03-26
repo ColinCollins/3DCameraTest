@@ -102,12 +102,12 @@ public class CameraController : MonoBehaviour
 
 	public void RotateByInput(Vector2 joystickDir)
 	{
-		prediction.setJoystickDir(joystickDir);
+		prediction.SetJoystickDir(joystickDir);
 	}
 
-	public void RotateByInput()
+	public void StopRotate()
 	{
-		prediction.setJoystickDir(Vector2.zero);
+		prediction.SetJoystickDir(Vector2.zero);
 	}
 
 	private void tickRotate(float time, float deltaTime)
@@ -148,7 +148,7 @@ public class CameraController : MonoBehaviour
 		var time = Time.time;
 		var deltaTime = Time.deltaTime;
 
-		prediction.tick(this, time, deltaTime);
+		prediction.Tick(this, time, deltaTime);
 		tickRotate(time, deltaTime);
 	}
 
@@ -164,7 +164,7 @@ public class CameraController : MonoBehaviour
 	{
 		if (!Application.isPlaying) return;
 
-		prediction.drawGizmos(this);
+		prediction.DrawGizmos(this);
 	}
 
 	#endregion

@@ -44,8 +44,8 @@ public class InputController : MonoBehaviour
 			cameraCtrl.RotateByInput(joystickDir);
 		}
 		else {
-			playerCtrl.stopMove();
-			cameraCtrl.stopRotate();
+			playerCtrl.StopMove();
+			cameraCtrl.StopRotate();
 		}
 	}
 

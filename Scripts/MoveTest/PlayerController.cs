@@ -57,7 +57,7 @@ public class PlayerController : MonoBehaviour
 		return true;
 	}
 
-	public void stopMove() 
+	public void StopMove() 
 	{
 		moveDir = Vector2.zero;
 	}
