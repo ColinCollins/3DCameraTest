@@ -20,10 +20,12 @@ public class InputController : MonoBehaviour
 	[BoxGroup("Controller")]
 	public CameraController cameraCtrl;
 
-	private bool getMoveDir(out Vector2 dir, out Vector2 joystickDir) {
+	private bool getMoveDir(out Vector2 dir, out Vector2 joystickDir)
+	{
 		joystickDir = new Vector2(Input.GetAxis(axisHorizontalName), Input.GetAxis(axisVerticalName));
 
-		if (axisHighPass > Mathf.Abs(joystickDir.x) && axisHighPass > Mathf.Abs(joystickDir.y)) {
+		if (axisHighPass > Mathf.Abs(joystickDir.x) && axisHighPass > Mathf.Abs(joystickDir.y))
+		{
 			dir = Vector2.zero;
 			return false;
 		}
@@ -37,17 +39,64 @@ public class InputController : MonoBehaviour
 		return true;
 	}
 
-	private void tickMove(float time, float deltaTime) {
+	private void tickMove(float time, float deltaTime)
+	{
 		if (getMoveDir(out Vector2 dir, out Vector2 joystickDir))
 		{
-			playerCtrl.move(dir);
+			playerCtrl.Move(dir);
 			cameraCtrl.RotateByInput(joystickDir);
 		}
-		else {
+		else
+		{
 			playerCtrl.StopMove();
 			cameraCtrl.StopRotate();
 		}
 	}
 
+	private void tickJump(float time, float deltaTime)
+	{
+		var v = Input.GetAxis(buttonJumpName);
+		if (v.equalsZero())
+		{
+			return;
+		}
 
+		playerCtrl.Jump();
+	}
+
+	private void Update()
+	{
+		if (cameraCtrl == null || playerCtrl == null)
+		{
+			return;
+		}
+
+		var time = Time.time;
+		var deltaTime = Time.deltaTime;
+
+		tickMove(time, deltaTime);
+		tickJump(time, deltaTime);
+	}
+
+	private void OnDrawGizmos()
+	{
+		Gizmos.color = Color.yellow;
+		Gizmos.DrawIcon(transform.position, "Cross", true);
+
+		if (Application.isPlaying)
+		{
+			if (getMoveDir(out Vector2 dir, out Vector2 joystickDir))
+			{
+				Gizmos.color = Color.green;
+				Gizmos.DrawRay(transform.position, joystickDir.normalized * 0.2f);
+			}
+
+			var v = Input.GetAxis(buttonJumpName);
+			if (!v.equalsZero())
+			{
+				Gizmos.color = Color.green;
+				Gizmos.DrawWireSphere(transform.position, v * 0.1f);
+			}
+		}
+	}
 }

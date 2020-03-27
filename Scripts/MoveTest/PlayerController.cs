@@ -6,7 +6,7 @@ using NaughtyAttributes;
 
 public class PlayerController : MonoBehaviour
 {
-	private const float FALL_INIT_SPEED = 0.0000f;
+	private const float FALL_INIT_SPEED = 0.00001f;
 
 	public CharacterController characterCtrl;
 
@@ -16,7 +16,7 @@ public class PlayerController : MonoBehaviour
 	public float moveSpeed = 1;
 	[BoxGroup("Config"), Tooltip("Rotate Step Per Sec")]
 	public float rotateDegreeSp = 1;
-	[BoxGroup("Condfig"), Tooltip("Rotate Speed")]
+	[BoxGroup("Config"), Tooltip("Rotate Speed")]
 	public float rotateSpeed = 1;
 	[BoxGroup("Config")]
 	public float jumpInitSpeed = 1;
@@ -49,7 +49,7 @@ public class PlayerController : MonoBehaviour
 		private set => transform.eulerAngles = value;
 	}
 
-	public bool move(Vector2 dir)
+	public bool Move(Vector2 dir)
 	{
 		moveDir = dir.normalized;
 		rotate2Yaw = moveDir.calcYaw().uniformAngle360();
@@ -57,20 +57,21 @@ public class PlayerController : MonoBehaviour
 		return true;
 	}
 
-	public void StopMove() 
+	public void StopMove()
 	{
 		moveDir = Vector2.zero;
 	}
 
-	public void jump() 
+	public void Jump()
 	{
-		if (!inTheAir) {
+		if (!inTheAir)
+		{
 			verticalSpeed = jumpInitSpeed;
 			inTheAir = true;
 		}
 	}
 
-	private void tickMove(float time, float deltaTime) 
+	private void tickMove(float time, float deltaTime)
 	{
 		var moveVec = Vector3.zero;
 
@@ -78,14 +79,16 @@ public class PlayerController : MonoBehaviour
 		var vec = moveDir.normalized * moveSpeedSp * moveSpeed * deltaTime;
 
 		moveVec.x = vec.x;
-		moveVec.y = vec.y;
+		moveVec.z = vec.y;
 
-		if (!inTheAir && !characterCtrl.isGrounded) {
+		if (!inTheAir && !characterCtrl.isGrounded)
+		{
 			verticalSpeed = FALL_INIT_SPEED;
 			inTheAir = true;
 		}
 
-		if (inTheAir) {
+		if (inTheAir)
+		{
 			moveVec.y = verticalSpeed * deltaTime;
 		}
 
@@ -102,12 +105,14 @@ public class PlayerController : MonoBehaviour
 		{
 			verticalSpeed = FALL_INIT_SPEED;
 		}
-		else {
+		else
+		{
 			verticalSpeed += gravity * deltaTime;
 		}
 	}
 
-	private void tickYaw(float time, float deltaTime) {
+	private void tickYaw(float time, float deltaTime)
+	{
 		var currentAngles = angles;
 		var currentYaw = currentAngles.y.uniformAngle360();
 
@@ -122,8 +127,8 @@ public class PlayerController : MonoBehaviour
 	{
 		var time = Time.time;
 		var deltaTime = Time.deltaTime;
-		tickMove(time, deltaTime);
 
+		tickMove(time, deltaTime);
 		tickYaw(time, deltaTime);
 	}
 

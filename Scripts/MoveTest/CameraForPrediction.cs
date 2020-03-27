@@ -79,6 +79,7 @@ public class CameraForPrediction
 		tickFollow(config, time, deltaTime);
 	}
 
+	// 保持相机参数的一致性
 	private void tickCamera(CameraController config, float time, float deltaTime)
 	{
 		camera.fieldOfView = config.camera.fieldOfView;
@@ -87,6 +88,8 @@ public class CameraForPrediction
 		camera.aspect = config.camera.aspect;
 	}
 
+	
+	// 处理摇杆对 yaw 和 pitch 的影响
 	private bool tickJoystick(CameraController config, float time, float deltaTime)
 	{
 		if (joystickDir.equalsZero()) return false;
@@ -160,19 +163,65 @@ public class CameraForPrediction
 			}
 		}
 
-
+		// 根据 yaw 和 pitch 调整集中情况，以及每种情况对目标的可见性，来决定最后的 yaw 和 pitch 的调整是否应被应用
 		var cameraRightVec = transform.right;
 		if (!yawSignOffset.equalsZero() && !pitchSignOffset.equalsZero())
 		{
-			if (rotateCanSee())
+			if (rotateCanSee(
+				config,
+				(target2SourceVec) =>
+				{
+					var tempVec = target2SourceVec.rotateByAngleAxis(pitchSignOffset, cameraRightVec);
+					return tempVec.rotateByAngles(Vector3.up * yawSignOffset);
+				},
+				out float collisionDistance
+				))
+			{
+				// yaw 和 pitch 同时生效后可见
+
+				targetAngles.y += yawSignOffset;
+				targetAngles.x += pitchSignOffset;
+				angles = targetAngles;
+
+				viewportZ = collisionDistance;
+
+				return true;
+			}
 		}
+		else if (!pitchSignOffset.equalsZero() && rotateCanSee(
+			config,
+			(target2SourceVec) => target2SourceVec.rotateByAngleAxis(pitchSignOffset, cameraRightVec),
+			out float collisionDistance
+			))
+		{
+			// 仅对 pitch 生效可见
+			targetAngles.x += pitchSignOffset;
+			angles = targetAngles;
+			viewportZ = collisionDistance;
+
+			return true;
+		}
+		else if (!yawSignOffset.equalsZero() && rotateCanSee(
+			config,
+			(target2SourceVec) => target2SourceVec.rotateByAngles(Vector3.up * yawSignOffset),
+			out collisionDistance
+			))
+		{
+			targetAngles.y += yawSignOffset;
+			angles = targetAngles;
+
+			viewportZ = collisionDistance;
+			return true;
+		}
+
+		return false;
 	}
 
 
 	private void tickSee(CameraController config, float time, float deltaTime)
 	{
 		var sourceP = shouldPosition;
-		var targetP = config.followPositon;
+		var targetP = config.followPosition;
 
 		var seeRet = canSee(config, sourceP, targetP, out Vector3 collisionP, out float collisionDistance);
 
@@ -187,7 +236,7 @@ public class CameraForPrediction
 			return;
 		}
 
-		seeRet = canSee(config, position, out collisionP, out collisionDistance);
+		seeRet = canSee(config, position, targetP, out collisionP, out collisionDistance);
 
 		// 确定当前位置的可见性
 		if (seeRet == SeeResult.CAN_SEE)
@@ -263,11 +312,50 @@ public class CameraForPrediction
 
 		var negativePitchViewportZOffset = negativePitchViewportZ.equalsZero() ? 0 : Mathf.Abs(negativePitchViewportZ - currentDistance);
 
-		// var positiveYawChooseTest -------------- not finished
 
+		// 从四个不同的角度选择最合适的调整选项并应用
+		var positiveYawChooseTest = calcChooseTest(config, positiveYawOffset, positiveYawViewportZOffset);
+		var negativeYawChooseTest = calcChooseTest(config, negativeYawOffset, negativeYawViewportZOffset);
+		var positivePitchChoosetTest = calcChooseTest(config, positivePitchOffset, positivePitchViewportZOffset);
+		var negativePitchChooseTest = calcChooseTest(config, negativePitchOffset, negativePitchViewportZOffset);
+
+		// 测试值越小越合适
+		if (positiveYawChooseTest < negativeYawChooseTest && positiveYawChooseTest < positivePitchChoosetTest && positiveYawChooseTest < negativePitchChooseTest)
+		{
+			currentAngles.y += positiveYawOffset;
+			viewportZ = positiveYawViewportZ;
+			angles = currentAngles;
+		}
+		else if (negativeYawChooseTest < positivePitchChoosetTest && negativeYawChooseTest < negativePitchChooseTest)
+		{
+			currentAngles.y -= negativeYawOffset;
+			viewportZ = negativeYawViewportZ;
+			angles = currentAngles;
+		}
+		else if (positivePitchChoosetTest < negativePitchChooseTest)
+		{
+			currentAngles.x += positivePitchOffset;
+			viewportZ = positivePitchViewportZ;
+			angles = currentAngles;
+		}
+		else if (negativePitchChooseTest < 360)
+		{
+			currentAngles.x -= negativePitchChooseTest;
+			viewportZ = negativePitchViewportZ;
+			angles = currentAngles;
+		}
+		else {
+			if (config.viewportZMin < collisionDistance)
+			{
+				viewportZ = collisionDistance;
+			}
+			else {
+				Debug.Log("Can't See");
+			}
+		}
 	}
 
-
+	// 调整 fvp 调整相机位置
 	private void tickFollow(CameraController config, float time, float deltaTime)
 	{
 		if (null == config.player) return;
@@ -277,6 +365,7 @@ public class CameraForPrediction
 		position += targetP - camera.ViewportToWorldPoint(config.finalFvp);
 	}
 
+	// 旋转后是否对目标可见
 	private bool rotateCanSee(CameraController config, System.Func<Vector3, Vector3> rotateFunc, out float collisionDistance)
 	{
 		var targetP = config.followPosition;
@@ -300,6 +389,8 @@ public class CameraForPrediction
 		return seeRet != SeeResult.CAN_NOT_SEE;
 	}
 
+	// 计算镜头和目标的相互可见性
+
 	private static SeeResult canSee(CameraController config, Vector3 cameraP, Vector3 targetP, out Vector3 collisionP, out float collisionDistance)
 	{
 		var dir = targetP - cameraP;
@@ -307,8 +398,66 @@ public class CameraForPrediction
 
 		collisionDistance = 0;
 
-		var see = !UtilPhysics.sphereCast(targetP, config.collisionRadius, (dir * -1f), );
+		var see = !UtilPhysics.sphereCast(targetP, config.collisionRadius, (dir * -1f), config.obstacleLayer, out RaycastHit hit, out collisionP, dist);
+		if (see) return SeeResult.CAN_SEE;
 
+		collisionP = Vector3.MoveTowards(collisionP, targetP, config.viewportZDecrease);
+		collisionDistance = Vector3.Distance(targetP, collisionP);
+
+		var seeSingle = !UtilPhysics.sphereCast(cameraP, config.collisionRadius, dir, config.obstacleLayer, out hit, out Vector3 _, dist);
+		if (seeSingle)
+		{
+			if (collisionDistance > config.viewportZMin && Mathf.Abs(dir.magnitude - collisionDistance) < config.viewportZChangeMax)
+			{
+				return SeeResult.CAN_SEE_SINGLE;
+			}
+		}
+
+		return SeeResult.CAN_NOT_SEE;
+	}
+
+	// 计算选项的测试值（集合角度偏移值和 zoom 值，以及它们各自的设定权值）
+	private static float calcChooseTest(CameraController config, float angleOffset, float viewportZOffset)
+	{
+		var chooseTest = float.MaxValue;
+		if (angleOffset > 360)
+		{
+			chooseTest = angleOffset * config.chooseAngleTestScale + viewportZOffset * config.chooseAngleTestScale;
+		}
+
+		return chooseTest;
+	}
+
+	// 找到可以看见目标的偏移角度
+	private static float findOutCanSeeAngleOffset(CameraController config,
+	float offsetDelta,
+	float offsetLimit,
+	System.Func<float, Vector3> vecRotateFunc,
+	Vector3 sourceP,
+	Vector3 targetP,
+	bool negativeRotate,
+	out float collisionDistance
+)
+	{
+		int offsetSign = negativeRotate ? -1 : 1;
+		float offset = 0;
+		collisionDistance = 0;
+		SeeResult seeRet = SeeResult.CAN_NOT_SEE;
+
+		Vector3 collisionP = sourceP;
+		var currentDistance = Vector3.Distance(sourceP, targetP);
+		for (; offset < offsetLimit && SeeResult.CAN_NOT_SEE == seeRet; offset += offsetDelta)
+		{
+			sourceP = targetP + vecRotateFunc(offset * offsetSign);
+			seeRet = canSee(config, sourceP, targetP, out collisionP, out collisionDistance);
+		}
+
+		if (SeeResult.CAN_NOT_SEE == seeRet)
+		{
+			offset = float.MaxValue;
+		}
+
+		return offset;
 	}
 
 }

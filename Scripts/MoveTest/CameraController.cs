@@ -14,17 +14,17 @@ public class CameraController : MonoBehaviour
 	public Vector3 followTargetOffset;
 	[BoxGroup("Follow")]
 	public Vector3 followViewport = new Vector3(0.5f, 0.5f, 5f); // why?
-	[BoxGroup("Follow"), MinMaxSlider(0.01f, 1.0f)]
-	public float followSmoothTime = 0.3f;
+	[BoxGroup("Follow"), Range(0.01f, 1.0f)]
+	public float followSmoothTime = 0.01f;
 	[BoxGroup("Follow")]
 	public float zoom = 1f;
 
-	[BoxGroup("Rotation"), MinMaxSlider(0.01f, 1.0f)]
+	[BoxGroup("Rotation"), Range(0.01f, 1.0f)]
 	public float yawSmoothTime = 0.3f;
-	[BoxGroup("Rotation"), MinMaxSlider(0.01f, 1.0f)]
+	[BoxGroup("Rotation"), Range(0.01f, 1.0f)]
 	public float pitchSmoothTime = 0.3f;
 
-	[BoxGroup("Joystick"), MinMaxSlider(0f, 90f), Tooltip("摇杆相对于垂直线的角度大于此值，相机会左右调整 yaw 值，调整速度和摇杆角度有关")]
+	[BoxGroup("Joystick"), Range(0f, 90f), Tooltip("摇杆相对于垂直线的角度大于此值，相机会左右调整 yaw 值，调整速度和摇杆角度有关")]
 	public float joystickHighPass = 0.3f;
 	[BoxGroup("Joystick"), Tooltip("根据摇杆角度调整 yaw 值时的最大速度")]
 	public float joystickYawSpeedMax = 60f;
@@ -48,10 +48,12 @@ public class CameraController : MonoBehaviour
 	[BoxGroup("Collision"), Tooltip("预测时，yaw 的探测变化量")]
 	public float pitchOffsetDelta = 1;
 	[BoxGroup("Collision"), Tooltip("预测时， viewport_z 的减量，适应相机位置 newarClipPlane 的差")]
-	public float viewport_z_decrease = 0.4f;
+	public float viewportZDecrease = 0.4f;
 	[BoxGroup("Collision"), Tooltip("预测时，角度变化量的参考倍率（乘法）")]
 	public float chooseAngleTestScale = 1;
 	[BoxGroup("Collision"), Tooltip("决策时， viewport_z 变化量的参考倍率（mulitply)")]
+	public float chooseViewportZTestScale = 1;
+	[BoxGroup("Collision"), Tooltip("决策时， viewportZ 的最小值")]
 	public float viewportZMin = 1;
 	[BoxGroup("Collision"), Tooltip("决策时，viewport_z 的最大变化量")]
 	public float viewportZChangeMax = 1;
